@@ -6,12 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class BarangMasuk extends Model
 {
-    //$table->foreignId('id_barang')->constrained('barangs')->onDelete('cascade');
-    // $table->foreignId('id_pemasok')->constrained('pemasoks')->onDelete('cascade');
-    // $table->integer('jumlah_masuk');
-    // $table->decimal('harga_satuan', 10, 2);
-    // $table->decimal('total', 10, 2);
-    // $table->date('tanggal');
 
     protected $fillable = [
         'id_barang',
@@ -21,4 +15,14 @@ class BarangMasuk extends Model
         'total',
         'tanggal'
     ];
+
+    public function idBarang()
+    {
+        return $this->belongsTo(Barang::class, 'id_barang', 'id');
+    }
+
+    public function idPemasok()
+    {
+        return $this->belongsTo(Pemasok::class, 'id_pemasok', 'id');
+    }
 }
