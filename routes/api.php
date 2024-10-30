@@ -7,7 +7,6 @@ use App\Http\Controllers\Api\BarangMasukController;
 use App\Http\Controllers\Api\PelangganController;
 use App\Http\Controllers\Api\PemasokController;
 use App\Http\Controllers\Api\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
