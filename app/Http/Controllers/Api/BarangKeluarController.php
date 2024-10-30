@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\BarangMasuk;
+use App\Models\BarangKeluar;
 use App\Models\MutasiBarang;
 use App\Models\StokBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-class BarangMasukController extends Controller
+class BarangKeluarController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -22,7 +22,7 @@ class BarangMasukController extends Controller
         $endDate = $request->end_date ?? '';
         $kategori = $request->kategori ?? '';
 
-        $data = BarangMasuk::when($search, function ($query) use ($search) {
+        $data = BarangKeluar::when($search, function ($query) use ($search) {
             $query->whereHas('idBarang', function ($query) use ($search) {
                 $query->where('nama', 'like', '%' . $search . '%');
             });
@@ -34,11 +34,11 @@ class BarangMasukController extends Controller
             $query->whereHas('idBarang', function ($query) use ($kategori) {
                 $query->where('kategori', $kategori);
             });
-        })->with('idBarang', 'idPemasok')->paginate($pagination);
+        })->with('idBarang', 'idPelanggan')->paginate($pagination);
 
         return response()->json([
             'success' => true,
-            'message' => 'List barang masuk',
+            'message' => 'List barang keluar',
             'data' => $data
         ], 200);
     }
@@ -58,9 +58,9 @@ class BarangMasukController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id_barang' => 'required|integer',
-            'id_pemasok' => 'required|integer',
-            'jumlah_masuk' => 'required|integer',
-            'harga_satuan' => 'required',
+            'id_pelanggan' => 'required|integer',
+            'jumlah_keluar' => 'required|integer',
+            'harga_jual' => 'required',
             'tanggal' => 'required|date',
         ]);
 
@@ -73,28 +73,28 @@ class BarangMasukController extends Controller
         }
 
         try {
-            // Insert into BarangMasuk
-            $barangMasuk = BarangMasuk::create([
+            // Insert into BarangKeluar
+            $barangKeluar = BarangKeluar::create([
                 'id_barang' => $request->id_barang,
-                'id_pemasok' => $request->id_pemasok,
-                'jumlah_masuk' => $request->jumlah_masuk,
-                'harga_satuan' => $request->harga_satuan,
-                'total' => $request->jumlah_masuk * $request->harga_satuan,
+                'id_pelanggan' => $request->id_pelanggan,
+                'jumlah_keluar' => $request->jumlah_keluar,
+                'harga_jual' => $request->harga_jual,
+                'total' => $request->jumlah_keluar * $request->harga_jual,
                 'tanggal' => $request->tanggal,
             ]);
 
             // Update or Create StokBarang
             $stokBarang = StokBarang::where('id_barang', $request->id_barang)->first();
             if ($stokBarang) {
-                $stokBarang->barang_masuk += $request->jumlah_masuk;
-                $stokBarang->stok_akhir += $request->jumlah_masuk;
+                $stokBarang->barang_keluar += $request->jumlah_keluar;
+                $stokBarang->stok_akhir -= $request->jumlah_keluar;
                 $stokBarang->save();
             } else {
                 StokBarang::create([
                     'id_barang' => $request->id_barang,
-                    'barang_masuk' => $request->jumlah_masuk,
-                    'barang_keluar' => 0,
-                    'stok_akhir' => $request->jumlah_masuk,
+                    'barang_masuk' => 0,
+                    'barang_keluar' => $request->jumlah_keluar,
+                    'stok_akhir' => -$request->jumlah_keluar,
                 ]);
             }
 
@@ -103,26 +103,26 @@ class BarangMasukController extends Controller
                 ->where('tanggal', $request->tanggal)
                 ->first();
             if ($mutasiBarang) {
-                $mutasiBarang->barang_masuk += $request->jumlah_masuk;
+                $mutasiBarang->barang_keluar += $request->jumlah_keluar;
                 $mutasiBarang->save();
             } else {
                 MutasiBarang::create([
                     'id_barang' => $request->id_barang,
-                    'barang_masuk' => $request->jumlah_masuk,
-                    'barang_keluar' => 0,
+                    'barang_masuk' => 0,
+                    'barang_keluar' => $request->jumlah_keluar,
                     'tanggal' => $request->tanggal,
                 ]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang masuk berhasil disimpan',
-                'data' => $barangMasuk
+                'message' => 'Barang keluar berhasil disimpan',
+                'data' => $barangKeluar
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Barang masuk gagal disimpan',
+                'message' => 'Barang keluar gagal disimpan',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -134,15 +134,15 @@ class BarangMasukController extends Controller
     public function show(string $id)
     {
         try {
-            $barangMasuk = BarangMasuk::findOrFail($id);
+            $barangKeluar = BarangKeluar::findOrFail($id);
             return response()->json([
                 'success' => true,
-                'data' => $barangMasuk
+                'data' => $barangKeluar
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Barang masuk tidak ditemukan',
+                'message' => 'Barang keluar tidak ditemukan',
                 'error' => $e->getMessage()
             ], 404);
         }
@@ -162,89 +162,89 @@ class BarangMasukController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            $barangMasuk = BarangMasuk::findOrFail($id);
+            $barangKeluar = BarangKeluar::findOrFail($id);
 
-            if (!$barangMasuk) {
+            if (!$barangKeluar) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Barang masuk tidak ditemukan',
+                    'message' => 'Barang keluar tidak ditemukan',
                 ], 404);
             }
 
-            $mutasiBarang = MutasiBarang::where('id_barang', $request->id_barang ?? $barangMasuk->id_barang)
-                ->where('tanggal', $barangMasuk->tanggal)
+            $mutasiBarang = MutasiBarang::where('id_barang', $request->id_barang ?? $barangKeluar->id_barang)
+                ->where('tanggal', $barangKeluar->tanggal)
                 ->first();
 
             if ($mutasiBarang) {
                 $mutasiBarang->update([
-                    'barang_masuk' => $mutasiBarang->barang_masuk - $barangMasuk->jumlah_masuk,
+                    'barang_keluar' => $mutasiBarang->barang_keluar - $barangKeluar->jumlah_keluar,
                 ]);
 
-                if ($mutasiBarang->barang_masuk == 0 && $mutasiBarang->barang_keluar == 0) {
+                if ($mutasiBarang->barang_keluar == 0 && $mutasiBarang->barang_masuk == 0) {
                     $mutasiBarang->delete();
                 }
             }
 
-            if ($request->tanggal && $request->tanggal != $barangMasuk->tanggal) {
-                $mutasiBarangNewDate = MutasiBarang::where('id_barang', $request->id_barang ?? $barangMasuk->id_barang)
+            if ($request->tanggal && $request->tanggal != $barangKeluar->tanggal) {
+                $mutasiBarangNewDate = MutasiBarang::where('id_barang', $request->id_barang ?? $barangKeluar->id_barang)
                     ->where('tanggal', $request->tanggal)
                     ->first();
 
                 if ($mutasiBarangNewDate) {
                     $mutasiBarangNewDate->update([
-                        'barang_masuk' => $mutasiBarangNewDate->barang_masuk + ($request->jumlah_masuk ?? $barangMasuk->jumlah_masuk),
+                        'barang_keluar' => $mutasiBarangNewDate->barang_keluar + ($request->jumlah_keluar ?? $barangKeluar->jumlah_keluar),
                     ]);
                 } else {
                     MutasiBarang::create([
-                        'id_barang' => $request->id_barang ?? $barangMasuk->id_barang,
-                        'barang_masuk' => $request->jumlah_masuk ?? $barangMasuk->jumlah_masuk,
-                        'barang_keluar' => 0,
+                        'id_barang' => $request->id_barang ?? $barangKeluar->id_barang,
+                        'barang_keluar' => $request->jumlah_keluar ?? $barangKeluar->jumlah_keluar,
+                        'barang_masuk' => 0,
                         'tanggal' => $request->tanggal,
                     ]);
                 }
             } else {
                 MutasiBarang::create([
-                    'id_barang' => $request->id_barang ?? $barangMasuk->id_barang,
-                    'barang_masuk' => $request->jumlah_masuk ?? $barangMasuk->jumlah_masuk,
-                    'barang_keluar' => 0,
-                    'tanggal' => $request->tanggal ?? $barangMasuk->tanggal,
+                    'id_barang' => $request->id_barang ?? $barangKeluar->id_barang,
+                    'barang_keluar' => $request->jumlah_keluar ?? $barangKeluar->jumlah_keluar,
+                    'barang_masuk' => 0,
+                    'tanggal' => $request->tanggal ?? $barangKeluar->tanggal,
                 ]);
             }
 
             // Update StokBarang
-            $stokBarang = StokBarang::where('id_barang', $request->id_barang ?? $barangMasuk->id_barang)->first();
+            $stokBarang = StokBarang::where('id_barang', $request->id_barang ?? $barangKeluar->id_barang)->first();
             if ($stokBarang) {
                 $stokBarang->update([
-                    'barang_masuk' => $stokBarang->barang_masuk - $barangMasuk->jumlah_masuk + ($request->jumlah_masuk ?? $barangMasuk->jumlah_masuk),
-                    'stok_akhir' => $stokBarang->stok_akhir - $barangMasuk->jumlah_masuk + ($request->jumlah_masuk ?? $barangMasuk->jumlah_masuk)
+                    'barang_keluar' => $stokBarang->barang_keluar - $barangKeluar->jumlah_keluar + ($request->jumlah_keluar ?? $barangKeluar->jumlah_keluar),
+                    'stok_akhir' => $stokBarang->stok_akhir - $barangKeluar->jumlah_keluar + ($request->jumlah_keluar ?? $barangKeluar->jumlah_keluar)
                 ]);
             } else {
                 StokBarang::create([
-                    'id_barang' => $request->id_barang ?? $barangMasuk->id_barang,
-                    'barang_masuk' => $request->jumlah_masuk ?? $barangMasuk->jumlah_masuk,
-                    'barang_keluar' => 0,
-                    'stok_akhir' => $request->jumlah_masuk ?? $barangMasuk->jumlah_masuk
+                    'id_barang' => $request->id_barang ?? $barangKeluar->id_barang,
+                    'barang_keluar' => $request->jumlah_keluar ?? $barangKeluar->jumlah_keluar,
+                    'barang_masuk' => 0,
+                    'stok_akhir' => $request->jumlah_keluar ?? $barangKeluar->jumlah_keluar
                 ]);
             }
 
-            $barangMasuk->update([
-                'id_barang' => $request->id_barang ?? $barangMasuk->id_barang,
-                'id_pemasok' => $request->id_pemasok ?? $barangMasuk->id_pemasok,
-                'jumlah_masuk' => $request->jumlah_masuk ?? $barangMasuk->jumlah_masuk,
-                'harga_satuan' => $request->harga_satuan ?? $barangMasuk->harga_satuan,
-                'total' => ($request->jumlah_masuk ?? $barangMasuk->jumlah_masuk) * ($request->harga_satuan ?? $barangMasuk->harga_satuan),
-                'tanggal' => $request->tanggal ?? $barangMasuk->tanggal,
+            $barangKeluar->update([
+                'id_barang' => $request->id_barang ?? $barangKeluar->id_barang,
+                'id_pelanggan' => $request->id_pelanggan ?? $barangKeluar->id_pelanggan,
+                'jumlah_keluar' => $request->jumlah_keluar ?? $barangKeluar->jumlah_keluar,
+                'harga_satuan' => $request->harga_satuan ?? $barangKeluar->harga_satuan,
+                'total' => ($request->jumlah_keluar ?? $barangKeluar->jumlah_keluar) * ($request->harga_satuan ?? $barangKeluar->harga_satuan),
+                'tanggal' => $request->tanggal ?? $barangKeluar->tanggal,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang masuk berhasil diperbarui',
-                'data' => $barangMasuk
+                'message' => 'Barang keluar berhasil diperbarui',
+                'data' => $barangKeluar
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Barang masuk gagal diperbarui',
+                'message' => 'Barang keluar gagal diperbarui',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -256,42 +256,42 @@ class BarangMasukController extends Controller
     public function destroy(string $id)
     {
         try {
-            $barangMasuk = BarangMasuk::findOrFail($id);
+            $barangKeluar = BarangKeluar::findOrFail($id);
 
             // Update StokBarang
-            $stokBarang = StokBarang::where('id_barang', $barangMasuk->id_barang)->first();
+            $stokBarang = StokBarang::where('id_barang', $barangKeluar->id_barang)->first();
             if ($stokBarang) {
                 $stokBarang->update([
-                    'barang_masuk' => $stokBarang->barang_masuk - $barangMasuk->jumlah_masuk,
-                    'stok_akhir' => $stokBarang->stok_akhir - $barangMasuk->jumlah_masuk
+                    'barang_keluar' => $stokBarang->barang_keluar - $barangKeluar->jumlah_keluar,
+                    'stok_akhir' => $stokBarang->stok_akhir + $barangKeluar->jumlah_keluar
                 ]);
             }
 
             // Update MutasiBarang
-            $mutasiBarang = MutasiBarang::where('id_barang', $barangMasuk->id_barang)
-                ->where('tanggal', $barangMasuk->tanggal)
+            $mutasiBarang = MutasiBarang::where('id_barang', $barangKeluar->id_barang)
+                ->where('tanggal', $barangKeluar->tanggal)
                 ->first();
             if ($mutasiBarang) {
-                $newBarangMasuk = $mutasiBarang->barang_masuk - $barangMasuk->jumlah_masuk;
-                if ($newBarangMasuk == 0) {
+                $newBarangKeluar = $mutasiBarang->barang_keluar - $barangKeluar->jumlah_keluar;
+                if ($newBarangKeluar == 0) {
                     $mutasiBarang->delete();
                 } else {
                     $mutasiBarang->update([
-                        'barang_masuk' => $newBarangMasuk,
+                        'barang_keluar' => $newBarangKeluar,
                     ]);
                 }
             }
 
-            $barangMasuk->delete();
+            $barangKeluar->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Barang masuk berhasil dihapus'
+                'message' => 'Barang keluar berhasil dihapus'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Barang masuk gagal dihapus',
+                'message' => 'Barang keluar gagal dihapus',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarangController;
+use App\Http\Controllers\Api\BarangKeluarController;
 use App\Http\Controllers\Api\BarangMasukController;
 use App\Http\Controllers\Api\PelangganController;
 use App\Http\Controllers\Api\PemasokController;
@@ -24,4 +25,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('/barang', BarangController::class);
 
     Route::apiResource('/barang-masuk', BarangMasukController::class);
+
+    Route::apiResource('/barang-keluar', BarangKeluarController::class);
 });
