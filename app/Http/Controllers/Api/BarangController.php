@@ -12,12 +12,17 @@ class BarangController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $pagination = $request->pagination ?? 100;
         $search = $request->search ?? '';
+        $kategori = $request->kategori ?? '';
 
-        $barang = Barang::where('nama', 'like', "%$search%")->paginate($pagination);
+        $barang = Barang::where('nama', 'like', "%$search%")
+            ->when($kategori, function ($query, $kategori) {
+                return $query->where('kategori', $kategori);
+            })
+            ->paginate($pagination);
 
         return response()->json([
             'success' => true,
