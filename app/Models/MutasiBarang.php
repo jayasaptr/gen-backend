@@ -12,4 +12,9 @@ class MutasiBarang extends Model
         'barang_keluar',
         'tanggal'
     ];
+
+    public function idBarang()
+    {
+        return $this->belongsTo(Barang::class, 'id_barang', 'id');
+    }
 }

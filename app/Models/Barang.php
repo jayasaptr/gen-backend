@@ -15,4 +15,9 @@ class Barang extends Model
         'harga_beli',
         'harga_jual',
     ];
+
+    public function stokBarang()
+    {
+        return $this->hasOne(StokBarang::class, 'id_barang', 'id');
+    }
 }

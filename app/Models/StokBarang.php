@@ -12,4 +12,14 @@ class StokBarang extends Model
         'barang_keluar',
         'stok_akhir'
     ];
+
+    public function idBarang()
+    {
+        return $this->belongsTo(Barang::class, 'id_barang', 'id');
+    }
+
+    // public function barang()
+    // {
+    //     return $this->belongsTo(Barang::class, 'id_barang', 'id');
+    // }
 }

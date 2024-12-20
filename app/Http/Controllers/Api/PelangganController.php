@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BarangKeluar;
 use App\Models\Pelanggan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -137,6 +138,33 @@ class PelangganController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Pelanggan Deleted',
+        ], 200);
+    }
+
+    public function reportPelanggan(Request $request)
+    {
+        $pagination = $request->pagination ?? 100;
+        $search = $request->search ?? '';
+
+        // $user = Pemasok::where('nama', 'like', "%$search%")
+        // ->withCount('barangMasuk')
+        // ->paginate($pagination);
+
+        $pemasok = Pelanggan::where('nama', 'like', "%$search%")
+            ->paginate($pagination);
+
+        // Format hasil untuk menambahkan jumlah total dari barang masuk
+        $pemasok->getCollection()->transform(function ($item) {
+            // Hitung total barang masuk berdasarkan id_pemasok
+            $item->total_barang_keluar = BarangKeluar::where('id_pelanggan', $item->id)->sum('jumlah_keluar');
+            return $item;
+        });
+
+
+        return response()->json([
+            'success' => true,
+            'message' => 'List Pelanggan',
+            'data' => $pemasok
         ], 200);
     }
 }

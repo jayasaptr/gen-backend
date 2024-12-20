@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BarangMasuk;
 use App\Models\Pemasok;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -12,7 +13,7 @@ class PemasokController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $pagination = $request->pagination ?? 100;
         $search = $request->search ?? '';
@@ -143,6 +144,33 @@ class PemasokController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Pemasok Deleted',
+        ], 200);
+    }
+
+    public function reportPemasok(Request $request)
+    {
+        $pagination = $request->pagination ?? 100;
+        $search = $request->search ?? '';
+
+        // $user = Pemasok::where('nama', 'like', "%$search%")
+        // ->withCount('barangMasuk')
+        // ->paginate($pagination);
+
+        $pemasok = Pemasok::where('nama', 'like', "%$search%")
+            ->paginate($pagination);
+
+        // Format hasil untuk menambahkan jumlah total dari barang masuk
+        $pemasok->getCollection()->transform(function ($item) {
+            // Hitung total barang masuk berdasarkan id_pemasok
+            $item->total_barang_masuk = BarangMasuk::where('id_pemasok', $item->id)->sum('jumlah_masuk');
+            return $item;
+        });
+
+
+        return response()->json([
+            'success' => true,
+            'message' => 'List Pemasok',
+            'data' => $pemasok
         ], 200);
     }
 }

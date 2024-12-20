@@ -14,7 +14,7 @@ class BarangKeluarController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $pagination = $request->pagination ?? 100;
         $search = $request->search ?? '';

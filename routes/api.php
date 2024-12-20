@@ -4,8 +4,10 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BarangController;
 use App\Http\Controllers\Api\BarangKeluarController;
 use App\Http\Controllers\Api\BarangMasukController;
+use App\Http\Controllers\Api\MutasiController;
 use App\Http\Controllers\Api\PelangganController;
 use App\Http\Controllers\Api\PemasokController;
+use App\Http\Controllers\Api\StokBarangController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,4 +28,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('/barang-masuk', BarangMasukController::class);
 
     Route::apiResource('/barang-keluar', BarangKeluarController::class);
+
+    Route::get('/mutasi-barang', [MutasiController::class, 'index']);
+
+    Route::get('/report-pemasok', [PemasokController::class, 'reportPemasok']);
+
+    Route::get('/report-stok', [StokBarangController::class, 'index']);
 });

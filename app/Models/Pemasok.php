@@ -15,4 +15,9 @@ class Pemasok extends Model
         'bank_number',
         'tax_number',
     ];
+
+    public function barangMasuk()
+    {
+        return $this->hasMany(BarangMasuk::class, 'id_pemasok');
+    }
 }
