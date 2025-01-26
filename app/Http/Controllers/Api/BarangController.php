@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Barang;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class BarangController extends Controller
@@ -60,7 +61,7 @@ class BarangController extends Controller
             ], 422);
         }
 
-        $barnag = Barang::create([
+        $barang = Barang::create([
             'kode' => $request->kode,
             'nama' => $request->nama,
             'kategori' => $request->kategori,
@@ -70,10 +71,17 @@ class BarangController extends Controller
             'harga_jual' => $request->harga_jual,
         ]);
 
+        DB::table('stok_barangs')->insert([
+            'id_barang' => $barang->id,
+            'barang_masuk' => 0,
+            'barang_keluar' => 0,
+            'stok_akhir' => $request->stock_awal,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Barang created',
-            'data' => $barnag
+            'data' => $barang
         ], 201);
     }
 

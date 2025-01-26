@@ -33,5 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/report-pemasok', [PemasokController::class, 'reportPemasok']);
 
+    Route::get('/report-pelanggan', [PelangganController::class, 'reportPelanggan']);
+
     Route::get('/report-stok', [StokBarangController::class, 'index']);
 });

@@ -73,6 +73,19 @@ class BarangKeluarController extends Controller
         }
 
         try {
+
+
+
+            // Update or Create StokBarang
+            $stokBarang = StokBarang::where('id_barang', $request->id_barang)->first();
+
+            if ($request->jumlah_keluar > $stokBarang->stok_akhir) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stok barang tidak terpenuhi',
+                ], 500);
+            }
+
             // Insert into BarangKeluar
             $barangKeluar = BarangKeluar::create([
                 'id_barang' => $request->id_barang,
@@ -83,8 +96,6 @@ class BarangKeluarController extends Controller
                 'tanggal' => $request->tanggal,
             ]);
 
-            // Update or Create StokBarang
-            $stokBarang = StokBarang::where('id_barang', $request->id_barang)->first();
             if ($stokBarang) {
                 $stokBarang->barang_keluar += $request->jumlah_keluar;
                 $stokBarang->stok_akhir -= $request->jumlah_keluar;
